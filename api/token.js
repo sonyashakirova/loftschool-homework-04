@@ -1,10 +1,7 @@
 const express = require('express')
 const router = express.Router()
+const { userController } = require('../controllers')
 
-// POST-запрос на /api/refresh-token - обновление access-токена. 
-// В headers['authorization'] прикрепить refresh-токен. 
-// Вернуть объект с токенами
-
-router.post('/')
+router.post('/', userController.refreshToken)
 
 module.exports = router

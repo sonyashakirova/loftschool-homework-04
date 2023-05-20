@@ -1,10 +1,7 @@
 const express = require('express')
 const router = express.Router()
+const { userController } = require('../controllers')
 
-// POST-запрос на /api/registration - создание нового пользователя (регистрация). 
-// Сигнатура запроса: { username, surName, firstName, middleName, password }. 
-// Необходимо вернуть объект авторизовавшегося пользователя.
-
-router.post('/')
+router.post('/', userController.register)
 
 module.exports = router

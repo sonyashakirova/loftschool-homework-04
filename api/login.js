@@ -1,10 +1,7 @@
 const express = require('express')
 const router = express.Router()
+const { userController } = require('../controllers')
 
-// POST-запрос на /api/login - авторизация после пользовательского ввода.
-// Cигнатура запроса: { username, password }
-// Необходимо вернуть объект авторизовавшегося пользователя.
-
-router.post('/')
+router.post('/', userController.login)
 
 module.exports = router

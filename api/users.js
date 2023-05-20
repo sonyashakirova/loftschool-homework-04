@@ -1,18 +1,9 @@
 const express = require('express')
 const router = express.Router()
+const { userController } = require('../controllers')
 
-// Автоматический GET-запрос на /api/users - получение списка пользователей. 
-// Необходимо вернуть список всех пользоватлей из базы данных.
-
-router.get('/')
-
-// DELETE-запрос на /api/users/:id - удаление пользователя.
-
-router.delete('/:id')
-
-// PATCH-запрос на /api/users/:id/permission
-// обновление существующей записи о разрешениях конкретного пользователя.
-
-router.patch('/:id/permission')
+router.get('/', userController.getAll)
+router.patch('/:id/permission', userController.permissionUpdate)
+router.delete('/:id', userController.delete)
 
 module.exports = router

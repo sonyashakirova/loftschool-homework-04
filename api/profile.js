@@ -1,14 +1,8 @@
 const express = require('express')
 const router = express.Router()
+const { userController } = require('../controllers')
 
-// GET-запрос на /api/profile - авторизация при наличии токена. 
-// Необходимо вернуть объект пользователя.
-
-router.get('/')
-
-// PATCH-запрос на /api/profile - обновление информации о пользователе.
-// Необходимо вернуть объект обновленного пользователя.
-
-router.patch('/')
+router.get('/', userController.profileAccess)
+router.patch('/', userController.profileUpdate)
 
 module.exports = router

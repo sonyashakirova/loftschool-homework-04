@@ -1,27 +1,10 @@
 const express = require('express')
 const router = express.Router()
+const { newsController } = require('../controllers')
 
-// GET-запрос на /api/news - получение списка новостей.
-// Необходимо вернуть список всех новостей из базы данных.
-
-router.get('/')
-
-
-// POST-запрос на /api/news - создание новой новости.
-// Сигнатура запроса: { text, title }.
-// Необходимо вернуть обновленный список всех новостей из базы данных.
-
-router.post('/')
-
-// PATCH-запрос на /api/news/:id - обновление существующей новости.
-// Сигнатура запроса: { text, title }.
-// Необходимо вернуть обновленный список всех новостей из базы данных.
-
-router.patch('/:id')
-
-// DELETE-запрос на /api/news/:id - удаление существующей новости.
-// Необходимо вернуть обновленный список всех новостей из базы данных.
-
-router.delete('/:id')
+router.get('/', newsController.getAll)
+router.post('/', newsController.create)
+router.patch('/:id', newsController.update)
+router.delete('/:id', newsController.delete)
 
 module.exports = router
