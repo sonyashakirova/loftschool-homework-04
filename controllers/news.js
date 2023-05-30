@@ -18,14 +18,29 @@ class newsController {
      * Создание новой новости
      */
     async create(req, res) {
-        
+        try {
+            const news = await News.create({ ...req.body })
+            
+            return res.json(news)
+        } catch(err) {
+            return res.status(500).json({ message: err.message })
+        }
     }
 
     /**
      * Обновление существующей новости
      */
     async update(req, res) {
-        const { id } = req.query
+        try {
+            const { id } = req.query
+
+            await News.update({ ...req.body }, { where: { id } })
+            const news = await News.findOne({ where: { id } })
+
+            return res.json(news)
+        } catch(err) {
+            return res.status(500).json({ message: err.message })
+        }
     }
 
     /**

@@ -1,6 +1,7 @@
 require('dotenv').config()
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+const path = require('path')
 const { User } = require('../models')
 const token = require('../helpers/token')
 
@@ -63,9 +64,9 @@ class UserController {
     async refreshToken(req, res) {
         try {
             const newRefreshToken = jwt.sign({ id: req.userId }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '24h' })
-            await User.update({ refreshToken: newRefreshToken }, { where: { id: req.userId }})
+            await User.update({ refreshToken: newRefreshToken }, { where: { id: req.userId } })
 
-            const user = await User.findOne({ where: { id: req.userId }})
+            const user = await User.findOne({ where: { id: req.userId } })
             const newTokenData = token(user)
 
             return res.json(newTokenData)
@@ -79,7 +80,7 @@ class UserController {
      */
     async profileAccess(req, res) {
         try {
-            const user = await User.findOne({ where: { id: req.userId }})
+            const user = await User.findOne({ where: { id: req.userId } })
 
             return res.json(user)
         } catch(err) {
@@ -92,7 +93,31 @@ class UserController {
      */
     async profileUpdate(req, res) {
         try {
+            const { firstName, middleName, surName, oldPassword, newPassword } = req.body
+
+            if (newPassword) {
+                const { password } = await User.findOne({ where: { id: req.userId } })
+                const comparePassword = await bcrypt.compare(oldPassword, password)
+
+                if (!comparePassword) {
+                    return res.status(400).json({ message: 'Неверный пароль' })
+                }
+
+                const hashPassword = await bcrypt.hash(newPassword, 5)
+                await User.update({ password: hashPassword }, { where: { id: req.userId } })
+            }
+
+            if (req.files) {
+                const { avatar } = req.files
+                const fileName = req.userId + '.jpg'
+                avatar.mv(path.resolve(__dirname, '..', 'upload', fileName))
+                await User.update({ image: 'images/' + fileName }, { where: { id: req.userId } })
+            }
             
+            await User.update({ firstName, middleName, surName }, { where: { id: req.userId } })
+            const user = await User.findOne({ where: { id: req.userId } })
+            
+            return res.json(user)
         } catch(err) {
             return res.status(500).json({ message: err.message })
         }
@@ -102,7 +127,17 @@ class UserController {
      * Обновление существующей записи о разрешениях конкретного пользователя
      */
     async permissionUpdate(req, res) {
-        const { id } = req.query
+        try {
+            const { id } = req.query
+            const { permission } = req.body
+
+            await User.update({ permission }, { where: { id } })
+            const user = await User.findOne({ where: { id } })
+
+            return res.json(user.permission)
+        } catch(err) {
+            return res.status(500).json({ message: err.message })
+        }
     }
 
     /**

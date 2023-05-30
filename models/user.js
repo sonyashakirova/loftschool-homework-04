@@ -14,6 +14,7 @@ const User = sequelize.define('user', {
         news: { C: true, R: true, U: true, D: true },
         settings: { C: true, R: true, U: true, D: true }
     }},
+    image: { type: DataTypes.STRING },
 })
 
 module.exports = User
