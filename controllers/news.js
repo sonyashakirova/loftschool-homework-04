@@ -8,7 +8,7 @@ class newsController {
         try {
             const news = await News.findAll()
 
-            return res.json({ data: news })
+            return res.json(news)
         } catch(err) {
             return res.status(500).json({ message: err.message })
         }
@@ -18,6 +18,7 @@ class newsController {
      * Создание новой новости
      */
     async create(req, res) {
+        
     }
 
     /**
@@ -36,7 +37,7 @@ class newsController {
             await News.destroy({ where: { id } })
             const news = await News.findAll()
             
-            return res.json({ data: news })
+            return res.json(news)
         } catch(err) {
             return res.status(500).json({ message: err.message })
         }

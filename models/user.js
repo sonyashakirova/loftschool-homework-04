@@ -8,10 +8,12 @@ const User = sequelize.define('user', {
     middleName: { type: DataTypes.STRING },
     surName: { type: DataTypes.STRING },
     password: { type: DataTypes.STRING, require: true },
-    // accessToken: { type: DataTypes.STRING },
-    // refreshToken: { type: DataTypes.STRING },
-    // accessTokenExpiredAt: { type: DataTypes.DATE },
-    // refreshTokenExpiredAt: { type: DataTypes.DATE }
+    refreshToken: { type: DataTypes.STRING },
+    permission: { type: DataTypes.JSON, defaultValue: {
+        chat: { C: true, R: true, U: true, D: true },
+        news: { C: true, R: true, U: true, D: true },
+        settings: { C: true, R: true, U: true, D: true }
+    }},
 })
 
 module.exports = User
