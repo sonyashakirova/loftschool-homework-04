@@ -1,4 +1,5 @@
 const { News } = require('../models')
+const getNewsWithUsers = require('../helpers/news')
 
 class newsController {
     /**
@@ -6,9 +7,9 @@ class newsController {
      */
     async getAll(req, res) {
         try {
-            const news = await News.findAll()
+            const newsWithUsers = await getNewsWithUsers()
 
-            return res.json(news)
+            return res.json(newsWithUsers)
         } catch(err) {
             return res.status(500).json({ message: err.message })
         }
@@ -19,9 +20,10 @@ class newsController {
      */
     async create(req, res) {
         try {
-            const news = await News.create({ ...req.body })
+            await News.create({ ...req.body, userId: req.userId })
+            const newsWithUsers = await getNewsWithUsers()
             
-            return res.json(news)
+            return res.json(newsWithUsers)
         } catch(err) {
             return res.status(500).json({ message: err.message })
         }
@@ -32,12 +34,11 @@ class newsController {
      */
     async update(req, res) {
         try {
-            const { id } = req.query
-
+            const { id } = req.params
             await News.update({ ...req.body }, { where: { id } })
-            const news = await News.findOne({ where: { id } })
-
-            return res.json(news)
+            const newsWithUsers = await getNewsWithUsers()
+            
+            return res.json(newsWithUsers)
         } catch(err) {
             return res.status(500).json({ message: err.message })
         }
@@ -48,15 +49,17 @@ class newsController {
      */
     async delete(req, res) {
         try {
-            const { id } = req.query
+            const { id } = req.params
             await News.destroy({ where: { id } })
-            const news = await News.findAll()
+            const newsWithUsers = await getNewsWithUsers()
             
-            return res.json(news)
+            return res.json(newsWithUsers)
         } catch(err) {
             return res.status(500).json({ message: err.message })
         }
     }
+
+    
 }
 
 module.exports = new newsController
