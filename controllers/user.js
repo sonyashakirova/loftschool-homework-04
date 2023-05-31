@@ -24,7 +24,7 @@ class UserController {
             const hashPassword = await bcrypt.hash(password, 5)
             const user = await User.create({ ...req.body, password: hashPassword })
 
-            const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '24h' })
+            const refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '7d' })
             await User.update({ refreshToken }, { where: { id: user.id } })
 
             return res.json(user)
@@ -39,7 +39,7 @@ class UserController {
     async login(req, res) {
         try {
             const { username, password } = req.body
-            const user = await User.findOne({ where: { username }})
+            const user = await User.findOne({ where: { username } })
 
             if (!user) {
                 return res.status(400).json({ message: 'Пользователь не найден' })
@@ -50,9 +50,9 @@ class UserController {
                 return res.status(400).json({ message: 'Неверный пароль' })
             }
 
-            const tokenData = token(user)
+            const tokenData = token(user.toJSON())
 
-            return res.json({ ...user, ...tokenData })
+            return res.json({ ...user.toJSON(), ...tokenData })
         } catch(err) {
             return res.status(500).json({ message: err.message })
         }
@@ -63,12 +63,13 @@ class UserController {
      */
     async refreshToken(req, res) {
         try {
-            const newRefreshToken = jwt.sign({ id: req.userId }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '24h' })
+            const newRefreshToken = jwt.sign({ id: req.userId }, process.env.REFRESH_TOKEN_SECRET, { expiresIn: '7d' })
             await User.update({ refreshToken: newRefreshToken }, { where: { id: req.userId } })
 
             const user = await User.findOne({ where: { id: req.userId } })
-            const newTokenData = token(user)
+            const newTokenData = token(user.toJSON())
 
+            res.setHeader('authorization', newRefreshToken)
             return res.json(newTokenData)
         } catch(err) {
             return res.status(500).json({ message: err.message })
@@ -82,7 +83,7 @@ class UserController {
         try {
             const user = await User.findOne({ where: { id: req.userId } })
 
-            return res.json(user)
+            return res.json(user.toJSON())
         } catch(err) {
             return res.status(500).json({ message: err.message })
         }
@@ -116,8 +117,8 @@ class UserController {
             
             await User.update({ firstName, middleName, surName }, { where: { id: req.userId } })
             const user = await User.findOne({ where: { id: req.userId } })
-            
-            return res.json(user)
+
+            return res.json(user.toJSON())
         } catch(err) {
             return res.status(500).json({ message: err.message })
         }
@@ -128,7 +129,7 @@ class UserController {
      */
     async permissionUpdate(req, res) {
         try {
-            const { id } = req.query
+            const { id } = req.params
             const { permission } = req.body
 
             await User.update({ permission }, { where: { id } })
@@ -145,7 +146,7 @@ class UserController {
      */
     async getAll(req, res) {
         try {
-            const users = await User.findAll()
+            const users = await User.findAll({ raw: true })
 
             return res.json(users)
         } catch(err) {
@@ -156,9 +157,9 @@ class UserController {
     /**
      * Удаление пользователя
      */
-    async delete(req, res, next) {
+    async delete(req, res) {
         try {
-            const { id } = req.query
+            const { id } = req.params
             await User.destroy({ where: { id } })
 
             return res.json({ message: 'Пользователь удален' })
