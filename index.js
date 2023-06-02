@@ -5,11 +5,11 @@ const cors = require('cors')
 const path = require('path')
 const fileUpload = require('express-fileupload')
 const http = require('http')
-const { Server } = require("socket.io")
+const { Message } = require('./models')
 
 const app = express()
 const server = http.createServer(app)
-const io = new Server(server)
+const io = require("socket.io").listen(server)
 
 app.use(cors())
 app.use(express.json())
@@ -18,15 +18,16 @@ app.use('/api', require('./api'))
 app.use('/images', express.static(path.join(__dirname, 'upload')))
 app.use(express.static(path.join(__dirname, 'build')))
 
-app.use(async (req, res, next) => {
-    return res.status(404).json({ message: 'Страница не найдена' })
+app.use('*', (_req, res) => {
+    const file = path.resolve(__dirname, 'build', 'index.html')
+    res.sendFile(file)
 })
 
 const start = async () => {
     try {
         await sequelize.authenticate()
         await sequelize.sync()
-        app.listen(process.env.PORT, () => console.log(`Server started on port ${process.env.PORT}`));
+        server.listen(process.env.PORT, () => console.log(`Server started on port ${process.env.PORT}`));
     } catch(err) {
         console.log(err)
     }
@@ -34,29 +35,43 @@ const start = async () => {
 
 start()
 
-const connections = {}; 
+const connections = {}
 io.on('connection', (socket) => {
-    // connections[socket.id] = {
-    //     username
-    //     socketId
-    //     userId
-    //     activeRoom
-    // }
+    socket.on('users:connect', (data) => {
+        const user = { ...data, socketId: socket.id, activeRoom: null }
+        connections[socket.id] = user
 
-    socket.on('users:connect', () => {
-        socket.send({ type: 'users:list', data: connections })
-        socket.broadcast.send({ type: 'users:add`', data: {} })
+        socket.emit('users:list', Object.values(connections))
+        socket.broadcast.emit({ type: 'users:add', data: user })
     })
 
-    socket.io('message:add', (message) => {
-        socket.send({ type: 'message:add', message, data: {} })
+    socket.on('message:add', async (data) => {
+        await Message.create({
+            userId: data.senderId,
+            recipientId: data.recipientId,
+            text: data.text
+        })
+
+        socket.emit('message:add', data)
+        socket.broadcast.to(data.roomId).emit('message:add', data)
     })
 
-    socket.io('message:history', () => {
-        socket.send({ type: 'message:history', data: {} })
+    socket.on('message:history', async (data) => {
+        const { userId, recipientId } = data
+
+        const messages = await Message.findAll({
+            where: {
+                userId: [userId, recipientId],
+                recipientId: [userId, recipientId]
+            },
+            raw: true
+        })
+
+        socket.emit('message:history', messages)
     })
 
     socket.on('disconnect', () => {
-        socket.broadcast.send({ type: 'users:leave`', data: {} })
+        delete connections[socket.id]
+        socket.broadcast.emit('users:leave', socket.id)
     })
 })

@@ -5,8 +5,10 @@ const getNewsWithUsers = async () => {
     const newsWithUsers = []
 
     for (let i = 0; i < news.length; i++) {
-        const user = await User.findOne({ where: { id: news[i].userId } })
-        newsWithUsers.push({ ...news[i], user: user.toJSON(), id: String(news[i].id) })
+        if (news[i].userId) {
+            const user = await User.findOne({ where: { id: news[i].userId } })
+            newsWithUsers.push({ ...news[i], user: user.toJSON(), id: String(news[i].id) })
+        }
     }
 
     return newsWithUsers
